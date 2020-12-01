@@ -2,13 +2,18 @@
 #include <stdlib.h>
 #include <iostream>
 #include <map>
+#include <fstream>
 
 using namespace std;
 
-#define NUM_CLUSTERS 3
+#define NUM_CLUSTERS 5
 #define DIM 2
 #include <math.h>
 
+/**
+ * Method to find random centroisd initially.
+ * Goes through all the elements and 
+ * */
 vector<vector<double>> getRandomCentroids(vector<vector<double>> nodes, int dim) {
     vector<double> min(dim, 0);
     vector<double> max(dim, 0);
@@ -70,7 +75,7 @@ double distanceBetweenVectors(vector<double> a, vector<double> b, int dim) {
         dist += pow((a[i] - b[i]), 2);
     }
 
-    return dist;
+    return pow(dist, 0.5);
 }
 
 int getIndexOfClosestCentroid(vector<vector<double>> centroids, vector<double> element, int dim) {
@@ -91,14 +96,15 @@ int getIndexOfClosestCentroid(vector<vector<double>> centroids, vector<double> e
 
 int main() {
     // assume we have vectors here
-    vector<double> v1 {0, 0};
-    vector<double> v2 {1, 1};
-    vector<double> v3 {0.1, 0.1};
-    vector<double> v4 {0, .5};
-    vector<double> v5 {.2, 1};
-    vector<vector<double>> elems {v1, v2, v3, v4, v5};
+    // vector<double> v1 {0, 0};
+    // vector<double> v2 {1, 1};
+    // vector<double> v3 {0.1, 0.1};
+    // vector<double> v4 {0, .5};
+    // vector<double> v5 {.2, 1};
+    // vector<vector<double>> elems {v1, v2, v3, v4, v5};
+    vector<vector<double>> elems;
 
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 1000; i++) {
         vector<double> addition(DIM, 0);
         for (int j = 0; j < DIM; j++) {
             addition[j] = ((double) rand() / (RAND_MAX)); 
@@ -129,6 +135,17 @@ int main() {
         int indexOfClosestCentroid = getIndexOfClosestCentroid(centroids, elems[i], DIM);
         clusters[indexOfClosestCentroid][sizes[indexOfClosestCentroid]++] = elems[i];
         elementToClusterIndex.insert(pair<vector<double>, int>(elems[i], indexOfClosestCentroid));
+
+        cout << "Element " << i << " was found to be closest to index " << indexOfClosestCentroid;
+        cout << "\nELEMENT: ";
+        for (int j = 0; j < DIM; j++) {
+            cout << elems[i][j] << ",";
+        }
+        cout << "\nThis index is mean ";
+        for (int j = 0; j < DIM; j++) {
+            cout << centroids[indexOfClosestCentroid][j] << ",";
+        }
+        cout << "with a distance of " << distanceBetweenVectors(centroids[indexOfClosestCentroid], elems[i], DIM) << "\n";
     }
 
     bool convergence = false;
@@ -170,7 +187,34 @@ int main() {
             cout << '\n';
         }
     }
-    
+
+    // write the clusters to a file
+    ofstream output;
+    output.open("output.txt");
+
+    output << "x,y,cluster\n";
+  
+    for (int i = 0; i < NUM_CLUSTERS; i++) {
+        for (int j = 0; j < sizes[i]; j++) {
+            for (auto k = clusters[i][j].begin(); k != clusters[i][j].end(); ++k)
+                output << *k << ',';
+            output << i << '\n';
+        }
+    }  
+
+    output.close();
+
+
+    // test to see this map makes sense
+    for (int i = 0; i < elems.size(); i++) {
+        // find min distance 
+        if (getIndexOfClosestCentroid(centroids, elems[i], DIM) != elementToClusterIndex[elems[i]]) {
+            cout << "Mismatch at elem " << i << "\n";
+        }
+    }
+
+
+
     return 0;
 }
 
