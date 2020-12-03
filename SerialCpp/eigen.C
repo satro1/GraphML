@@ -6,6 +6,7 @@ Univ. Press) by W.H. Press, S.A. Teukolsky, W.T. Vetterling, and B.P. Flannery
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "utils.h"
 
 #define NR_END 1
 #define SIGN(a,b) ((b) >= 0.0 ? fabs(a) : -fabs(a))
@@ -114,8 +115,6 @@ contains no useful information on output. Otherwise they are to be included.
 	}
 }
 
-/******************************************************************************/
-void tqli(double d[], double e[], int n, double **z)
 /*******************************************************************************
 QL algorithm with implicit shifts, to determine the eigenvalues and eigenvectors
 of a real, symmetric, tridiagonal matrix, or of a real, symmetric matrix
@@ -129,7 +128,7 @@ identity matrix. If the eigenvectors of a matrix that has been reduced by tred2
 are required, then z is input as the matrix output by tred2. In either case,
 the kth column of z returns the normalized eigenvector corresponding to d[k].
 *******************************************************************************/
-{
+void tqli(double d[], double e[], int n, double **z) {
 	double pythag(double a, double b);
 	int m,l,iter,i,k;
 	double s,r,p,g,f,dd,c,b;
@@ -181,12 +180,10 @@ the kth column of z returns the normalized eigenvector corresponding to d[k].
 	}
 }
 
-/******************************************************************************/
-double pythag(double a, double b)
 /*******************************************************************************
 Computes (a2 + b2)1/2 without destructive underflow or overflow.
 *******************************************************************************/
-{
+double pythag(double a, double b) {
 	double absa,absb;
 	absa=fabs(a);
 	absb=fabs(b);
@@ -196,6 +193,55 @@ Computes (a2 + b2)1/2 without destructive underflow or overflow.
 
 //==============================================================================
 
-// main(int argc, char *argv[]) {
+// NOTE: above code uses one-indexed arrays! need to account for that (e.g. line 210, 231,232, 239)
 
-// }
+int main(int argc, char *argv[]) {
+    // Check args.
+    if (argc != 5) {
+        printf("Usage ./eigen <is_sim_matrix = 0> <num_nodes> <filename of adj list>");
+        exit(1);
+    }
+    bool is_sim_matrix = atoi(argv[1]) == 0;
+    int num_nodes = atoi(argv[2]);
+    char *input_filename = argv[3];
+    char *output_filename = argv[4];
+
+    // Read in file.
+    double **matrix = alloc_2d_array(num_nodes+1, num_nodes+1);
+    FILE *fp = fopen(input_filename, "r");
+    if (fp == NULL) {
+        printf("Failed to open provided file.\n");
+        exit(1);
+    }
+    if (is_sim_matrix) {
+        for (int r = 1; r <= num_nodes; r++) {
+            for (int c = 1; c <= num_nodes; c++) {
+                fscanf(fp, "%lf%*c", &matrix[r][c]);
+            }
+        }  
+    } else {
+        // TODO(iancostello): Support loading from similarity list.
+        printf("Adjacency list not yet supported.");
+        exit(0);
+    }
+    fclose(fp);
+
+    // Create Laplacian.  
+
+    double* diagonal = (double*) calloc(num_nodes+1, sizeof(double));
+    double* nondiag = (double*) calloc(num_nodes+1, sizeof(double));
+    tred2(matrix, num_nodes, diagonal, nondiag);
+    tqli(diagonal, nondiag, num_nodes, matrix);
+
+
+    // Output to adjacency matrix as file.
+    FILE *output = fopen(output_filename, "w");
+    for (int r = 1; r <= num_nodes; r++) {
+        for (int c = 1; c <= num_nodes; c++) {
+            fprintf(output, "%lf ", matrix[r][c]);
+        }
+        fprintf(output, "\n");
+    }
+    fclose(output);
+
+}
