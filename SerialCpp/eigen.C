@@ -124,9 +124,10 @@ int main(int argc, char *argv[]) {
         printf("Failed to open provided file.\n");
         exit(1);
     }
+
     if (is_sim_matrix) {
-        for (int r = 1; r <= num_nodes; r++) {
-            for (int c = 1; c <= num_nodes; c++) {
+        for (int r = 0; r < num_nodes; r++) {
+            for (int c = 0; c < num_nodes; c++) {
                 fscanf(fp, "%lf%*c", &matrix[r][c]);
             }
         }  
