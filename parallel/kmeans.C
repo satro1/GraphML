@@ -20,11 +20,13 @@ vector<vector<double>> getRandomCentroids(vector<vector<double>> nodes, int dim,
     vector<double> min(dim, 0);
     vector<double> max(dim, 0);
 
+    #omp parallel for
     for (int i = 0; i < dim; i++) {
         min[i] = nodes[0][i];
         max[i] = nodes[0][i];
     }
 
+    #omp parallel for collapse(2)
     for (int i = 0; i < nodes.size(); i++) {
         for (int j = 0; j < dim; j++) {
             if (nodes[i][j] < min[j]) {
@@ -40,6 +42,7 @@ vector<vector<double>> getRandomCentroids(vector<vector<double>> nodes, int dim,
     srand(0);
 
     vector<vector<double>> ret(numClusters, vector<double>(dim, 0));
+    #omp parallel for collapse(2)
     for (int i = 0; i < numClusters; i++) {
         for (int j = 0; j < dim; j++) {
             // set this to a random value between min[j] and max[j]
@@ -54,16 +57,18 @@ vector<vector<double>> getRandomCentroids(vector<vector<double>> nodes, int dim,
  * Method to get a new mean given a cluster
  * */
 vector<double> getMean(vector<vector<double>> cluster, int dim) {
-    int numElem = 0;
+    int numElem = cluster.size();
     vector<double> mean(dim, 0);
 
+    #omp parallel for
     for (int i = 0; i < cluster.size(); i++) {
-        numElem++;
+        #omp parallel for
         for (int j = 0; j < dim; j++) {
             mean[j] += cluster[i][j];
         }
     }
 
+    #omp parallel for
     for (int i = 0; i < dim; i++) {
         mean[i] /= numElem;
     }
@@ -74,6 +79,7 @@ vector<double> getMean(vector<vector<double>> cluster, int dim) {
 double distanceBetweenVectors(vector<double> a, vector<double> b, int dim) {
     double dist = 0;
     
+    #omp parallel for
     for (int i = 0; i < dim; i++) {
         dist += pow((a[i] - b[i]), 2);
     }
@@ -84,9 +90,10 @@ double distanceBetweenVectors(vector<double> a, vector<double> b, int dim) {
 int getIndexOfClosestCentroid(vector<vector<double>> centroids, vector<double> element, int dim) {
     int indexOfClosest = -1;
     double minDistance = 0;
+
+    // TODO Going to need a private clause i believe
+    #omp parallel for
     for (int i = 0; i < centroids.size(); i++) {
-
-
         double tempDistance = distanceBetweenVectors(centroids[i], element, dim);
         if (tempDistance < minDistance || indexOfClosest == -1) {
             minDistance = tempDistance;
@@ -127,6 +134,8 @@ vector<vector<vector<double>>> runKMeans(vector<vector<double>> elements, int di
     t_start = std::chrono::high_resolution_clock::now();
 
     // place the elements into their initial clusters
+    // TODO something with shared here
+    #omp parallel for shared(clusters)
     for (int i = 0; i < elements.size(); i++) {
         // find which centroid its closest to
         int indexOfClosestCentroid = getIndexOfClosestCentroid(centroids, elements[i], dimensionOfVectors);
@@ -149,11 +158,10 @@ vector<vector<vector<double>>> runKMeans(vector<vector<double>> elements, int di
 
     t_end = chrono::high_resolution_clock::now();
  
-    if (verbose) {
-        cout << "Wall clock time For finding initial clusters: "
+    cout << "Wall clock time For finding initial clusters: "
               << std::chrono::duration<double, std::milli>(t_end-t_start).count()
               << " ms\n";
-    }
+
 
     t_start = chrono::high_resolution_clock::now();
 
@@ -162,15 +170,18 @@ vector<vector<vector<double>>> runKMeans(vector<vector<double>> elements, int di
         if (verbose) cout << "Iteration\n";
         convergence = true;
         // regenerate the centroids so they are the new means
+        #omp parallel for
         for (int i = 0; i < numClusters; i++) {
             centroids[i] = getMean(clusters[i], dimensionOfVectors);
         }
         // reset sizes
+        #omp parallel for
         for (int i = 0; i < sizes.size(); i++) {
             sizes[i] = 0;
         }
 
         // loop through every element and put them their new respective cluster
+        #omp parallel for
         for (int i = 0; i < elements.size(); i++) {
             int newIndex = getIndexOfClosestCentroid(centroids, elements[i], dimensionOfVectors);
             int oldIndex = elementToClusterIndex[elements[i]];
@@ -187,12 +198,9 @@ vector<vector<vector<double>>> runKMeans(vector<vector<double>> elements, int di
     }
 
     t_end = chrono::high_resolution_clock::now();
-
-    if (verbose) {
-        cout << "Wall clock time For iterating through and finding clusters: "
+    cout << "Wall clock time For iterating through and finding clusters: "
             << std::chrono::duration<double, std::milli>(t_end-t_start).count()
             << " ms\n";
-    }
 
 
     if (verbose) {
@@ -208,52 +216,50 @@ vector<vector<vector<double>>> runKMeans(vector<vector<double>> elements, int di
         }    
     }
 
-    // if (fileOut.length() > 0) {
-    //     // write the clusters to a file
-    //     ofstream output;
-    //     output.open(fileOut);
-    //     for (int i = 0; i < dimensionOfVectors; i++) output << "x" << i << ",";
-    //     output << "cluster\n";
-    //     for (int i = 0; i < numClusters; i++) {
-    //         for (int j = 0; j < sizes[i]; j++) {
-    //             for (auto k = clusters[i][j].begin(); k != clusters[i][j].end(); ++k)
-    //                 output << *k << ',';
-    //             output << i << '\n';
-    //         }
-    //     }  
-    //     output.close();
-    // }
+    if (fileOut.length() > 0) {
+        // write the clusters to a file
+        ofstream output;
+        output.open(fileOut);
+        for (int i = 0; i < dimensionOfVectors; i++) output << "x" << i << ",";
+        output << "cluster\n";
+        for (int i = 0; i < numClusters; i++) {
+            for (int j = 0; j < sizes[i]; j++) {
+                for (auto k = clusters[i][j].begin(); k != clusters[i][j].end(); ++k)
+                    output << *k << ',';
+                output << i << '\n';
+            }
+        }  
+
+        output.close();
+    }
 
     // test to see this map makes sense
-    if (verbose) {
-        for (int i = 0; i < elements.size(); i++) {
-            // find min distance 
-            if (getIndexOfClosestCentroid(centroids, elements[i], dimensionOfVectors) != elementToClusterIndex[elements[i]]) {
-                cout << "Mismatch at elem " << i << "\n";
-            }
-        }
-    }
-    
+    // for (int i = 0; i < elements.size(); i++) {
+    //     // find min distance 
+    //     if (getIndexOfClosestCentroid(centroids, elements[i], dimensionOfVectors) != elementToClusterIndex[elements[i]]) {
+    //         cout << "Mismatch at elem " << i << "\n";
+    //     }
+    // }
 
     return clusters;
 }
 
-// int main() {
-//     // assume we have vectors here
-//     vector<vector<double>> elems;
-//     int dim = 100;
-//     int numClusters = 5;
+int main() {
+    // assume we have vectors here
+    vector<vector<double>> elems;
+    int dim = 100;
+    int numClusters = 5;
 
-//     for (int i = 0; i < 100000; i++) {
-//         vector<double> addition(dim, 0);
-//         for (int j = 0; j < dim; j++) {
-//             addition[j] = ((double) rand() / (RAND_MAX)); 
-//         }
-//         elems.push_back(addition);
-//     }
+    for (int i = 0; i < 100000; i++) {
+        vector<double> addition(dim, 0);
+        for (int j = 0; j < dim; j++) {
+            addition[j] = ((double) rand() / (RAND_MAX)); 
+        }
+        elems.push_back(addition);
+    }
 
-//     runKMeans(elems, dim, numClusters, false, "kmeans_output.txt");
+    runKMeans(elems, dim, numClusters, false, "kmeans_output.txt");
 
-//     return 0;
-// }
+    return 0;
+}
 

@@ -8,7 +8,7 @@ combined: $(FILES)
 	$(CXX) $(CXX_FLAGS) $(FILES) -o spectral
 
 run: all
-	valgrind ./spectral 0 5 3 ../SampleInput/small5x5.input 1 output.txt
+	./spectral 0 5 3 ../SampleInput/small5x5.input 1 output.txt
 
 
 similarity_calc: similarity_calc.C
