@@ -20,11 +20,13 @@ vector<vector<double>> getRandomCentroids(vector<vector<double>> nodes, int dim,
     vector<double> min(dim, 0);
     vector<double> max(dim, 0);
 
+    #omp parallel for
     for (int i = 0; i < dim; i++) {
         min[i] = nodes[0][i];
         max[i] = nodes[0][i];
     }
 
+    #omp parallel for
     for (int i = 0; i < nodes.size(); i++) {
         for (int j = 0; j < dim; j++) {
             if (nodes[i][j] < min[j]) {
@@ -40,6 +42,7 @@ vector<vector<double>> getRandomCentroids(vector<vector<double>> nodes, int dim,
     srand(0);
 
     vector<vector<double>> ret(numClusters, vector<double>(dim, 0));
+    #omp parallel for collapse(2)
     for (int i = 0; i < numClusters; i++) {
         for (int j = 0; j < dim; j++) {
             // set this to a random value between min[j] and max[j]
@@ -57,6 +60,7 @@ vector<double> getMean(vector<vector<double>> cluster, int dim) {
     int numElem = 0;
     vector<double> mean(dim, 0);
 
+    // TODO some  loop but were going to need some private clause
     for (int i = 0; i < cluster.size(); i++) {
         numElem++;
         for (int j = 0; j < dim; j++) {
@@ -64,6 +68,7 @@ vector<double> getMean(vector<vector<double>> cluster, int dim) {
         }
     }
 
+    #omp parallel for
     for (int i = 0; i < dim; i++) {
         mean[i] /= numElem;
     }
@@ -74,6 +79,7 @@ vector<double> getMean(vector<vector<double>> cluster, int dim) {
 double distanceBetweenVectors(vector<double> a, vector<double> b, int dim) {
     double dist = 0;
     
+    #omp parallel for
     for (int i = 0; i < dim; i++) {
         dist += pow((a[i] - b[i]), 2);
     }
@@ -84,9 +90,10 @@ double distanceBetweenVectors(vector<double> a, vector<double> b, int dim) {
 int getIndexOfClosestCentroid(vector<vector<double>> centroids, vector<double> element, int dim) {
     int indexOfClosest = -1;
     double minDistance = 0;
+
+    // TODO Going to need a private clause i believe
+    #omp parallel for
     for (int i = 0; i < centroids.size(); i++) {
-
-
         double tempDistance = distanceBetweenVectors(centroids[i], element, dim);
         if (tempDistance < minDistance || indexOfClosest == -1) {
             minDistance = tempDistance;
@@ -127,6 +134,7 @@ vector<vector<vector<double>>> runKMeans(vector<vector<double>> elements, int di
     t_start = std::chrono::high_resolution_clock::now();
 
     // place the elements into their initial clusters
+    #omp parallel for
     for (int i = 0; i < elements.size(); i++) {
         // find which centroid its closest to
         int indexOfClosestCentroid = getIndexOfClosestCentroid(centroids, elements[i], dimensionOfVectors);
@@ -161,15 +169,18 @@ vector<vector<vector<double>>> runKMeans(vector<vector<double>> elements, int di
         if (verbose) cout << "Iteration\n";
         convergence = true;
         // regenerate the centroids so they are the new means
+        #omp parallel for
         for (int i = 0; i < numClusters; i++) {
             centroids[i] = getMean(clusters[i], dimensionOfVectors);
         }
         // reset sizes
+        #omp parallel for
         for (int i = 0; i < sizes.size(); i++) {
             sizes[i] = 0;
         }
 
         // loop through every element and put them their new respective cluster
+        #omp parallel for
         for (int i = 0; i < elements.size(); i++) {
             int newIndex = getIndexOfClosestCentroid(centroids, elements[i], dimensionOfVectors);
             int oldIndex = elementToClusterIndex[elements[i]];
@@ -222,12 +233,12 @@ vector<vector<vector<double>>> runKMeans(vector<vector<double>> elements, int di
     }
 
     // test to see this map makes sense
-    for (int i = 0; i < elements.size(); i++) {
-        // find min distance 
-        if (getIndexOfClosestCentroid(centroids, elements[i], dimensionOfVectors) != elementToClusterIndex[elements[i]]) {
-            cout << "Mismatch at elem " << i << "\n";
-        }
-    }
+    // for (int i = 0; i < elements.size(); i++) {
+    //     // find min distance 
+    //     if (getIndexOfClosestCentroid(centroids, elements[i], dimensionOfVectors) != elementToClusterIndex[elements[i]]) {
+    //         cout << "Mismatch at elem " << i << "\n";
+    //     }
+    // }
 
     return clusters;
 }
