@@ -22,7 +22,7 @@
 
 struct QueueItem {
   int next_node;
-  int distance;
+  double distance;
 };
 
 /**
@@ -37,7 +37,7 @@ struct QueueItem {
  *  episilon: Max distance to traverse.
  */
 void _recursive_laplacian_bfs(double **const matrix, double **sim_matrix,
-                              int num_nodes, int curr_node, int epsilon) {
+                              int num_nodes, int curr_node, double epsilon) {
   // Setup BFS data structures.
   std::set<int> visited_nodes;
   std::queue<struct QueueItem> queue;
