@@ -149,10 +149,11 @@ vector<vector<vector<double>>> runKMeans(vector<vector<double>> elements, int di
 
     t_end = chrono::high_resolution_clock::now();
  
-    cout << "Wall clock time For finding initial clusters: "
+    if (verbose) {
+        cout << "Wall clock time For finding initial clusters: "
               << std::chrono::duration<double, std::milli>(t_end-t_start).count()
               << " ms\n";
-
+    }
 
     t_start = chrono::high_resolution_clock::now();
 
@@ -186,9 +187,12 @@ vector<vector<vector<double>>> runKMeans(vector<vector<double>> elements, int di
     }
 
     t_end = chrono::high_resolution_clock::now();
-    cout << "Wall clock time For iterating through and finding clusters: "
+
+    if (verbose) {
+        cout << "Wall clock time For iterating through and finding clusters: "
             << std::chrono::duration<double, std::milli>(t_end-t_start).count()
             << " ms\n";
+    }
 
 
     if (verbose) {
@@ -204,50 +208,52 @@ vector<vector<vector<double>>> runKMeans(vector<vector<double>> elements, int di
         }    
     }
 
-    if (fileOut.length() > 0) {
-        // write the clusters to a file
-        ofstream output;
-        output.open(fileOut);
-        for (int i = 0; i < dimensionOfVectors; i++) output << "x" << i << ",";
-        output << "cluster\n";
-        for (int i = 0; i < numClusters; i++) {
-            for (int j = 0; j < sizes[i]; j++) {
-                for (auto k = clusters[i][j].begin(); k != clusters[i][j].end(); ++k)
-                    output << *k << ',';
-                output << i << '\n';
-            }
-        }  
-
-        output.close();
-    }
+    // if (fileOut.length() > 0) {
+    //     // write the clusters to a file
+    //     ofstream output;
+    //     output.open(fileOut);
+    //     for (int i = 0; i < dimensionOfVectors; i++) output << "x" << i << ",";
+    //     output << "cluster\n";
+    //     for (int i = 0; i < numClusters; i++) {
+    //         for (int j = 0; j < sizes[i]; j++) {
+    //             for (auto k = clusters[i][j].begin(); k != clusters[i][j].end(); ++k)
+    //                 output << *k << ',';
+    //             output << i << '\n';
+    //         }
+    //     }  
+    //     output.close();
+    // }
 
     // test to see this map makes sense
-    for (int i = 0; i < elements.size(); i++) {
-        // find min distance 
-        if (getIndexOfClosestCentroid(centroids, elements[i], dimensionOfVectors) != elementToClusterIndex[elements[i]]) {
-            cout << "Mismatch at elem " << i << "\n";
+    if (verbose) {
+        for (int i = 0; i < elements.size(); i++) {
+            // find min distance 
+            if (getIndexOfClosestCentroid(centroids, elements[i], dimensionOfVectors) != elementToClusterIndex[elements[i]]) {
+                cout << "Mismatch at elem " << i << "\n";
+            }
         }
     }
+    
 
     return clusters;
 }
 
-int main() {
-    // assume we have vectors here
-    vector<vector<double>> elems;
-    int dim = 100;
-    int numClusters = 5;
+// int main() {
+//     // assume we have vectors here
+//     vector<vector<double>> elems;
+//     int dim = 100;
+//     int numClusters = 5;
 
-    for (int i = 0; i < 100000; i++) {
-        vector<double> addition(dim, 0);
-        for (int j = 0; j < dim; j++) {
-            addition[j] = ((double) rand() / (RAND_MAX)); 
-        }
-        elems.push_back(addition);
-    }
+//     for (int i = 0; i < 100000; i++) {
+//         vector<double> addition(dim, 0);
+//         for (int j = 0; j < dim; j++) {
+//             addition[j] = ((double) rand() / (RAND_MAX)); 
+//         }
+//         elems.push_back(addition);
+//     }
 
-    runKMeans(elems, dim, numClusters, false, "kmeans_output.txt");
+//     runKMeans(elems, dim, numClusters, false, "kmeans_output.txt");
 
-    return 0;
-}
+//     return 0;
+// }
 
