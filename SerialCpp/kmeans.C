@@ -7,14 +7,14 @@
 using namespace std;
 
 #define NUM_CLUSTERS 5
-#define DIM 2
+#define DIM 5
 #include <math.h>
 
 /**
  * Method to find random centroisd initially.
  * Goes through all the elements and 
  * */
-vector<vector<double>> getRandomCentroids(vector<vector<double>> nodes, int dim) {
+vector<vector<double>> getRandomCentroids(vector<vector<double>> nodes, int dim, int numClusters) {
     vector<double> min(dim, 0);
     vector<double> max(dim, 0);
 
@@ -37,8 +37,8 @@ vector<vector<double>> getRandomCentroids(vector<vector<double>> nodes, int dim)
     // sede
     srand(0);
 
-    vector<vector<double>> ret(NUM_CLUSTERS, vector<double>(dim, 0));
-    for (int i = 0; i < NUM_CLUSTERS; i++) {
+    vector<vector<double>> ret(numClusters, vector<double>(dim, 0));
+    for (int i = 0; i < numClusters; i++) {
         for (int j = 0; j < dim; j++) {
             // set this to a random value between min[j] and max[j]
             ret[i][j] = ((double) rand() / (RAND_MAX)) * (max[j] - min[j]) + min[j];
@@ -97,7 +97,7 @@ int getIndexOfClosestCentroid(vector<vector<double>> centroids, vector<double> e
 
 vector<vector<vector<double>>> runKMeans(vector<vector<double>> elements, int dimensionOfVectors, int numClusters, bool verbose, string fileOut) {
     // generate random centroids here
-    vector<vector<double>> centroids = getRandomCentroids(elements, dimensionOfVectors);
+    vector<vector<double>> centroids = getRandomCentroids(elements, dimensionOfVectors, numClusters);
 
     if (verbose) {
         cout << "Random centroids: \n";
@@ -182,8 +182,8 @@ vector<vector<vector<double>>> runKMeans(vector<vector<double>> elements, int di
         // write the clusters to a file
         ofstream output;
         output.open(fileOut);
-        for (int i = 0; i < dimensionOfVectors; i++) cout << "x" << i << ",";
-        cout << ",cluster\n";
+        for (int i = 0; i < dimensionOfVectors; i++) output << "x" << i << ",";
+        output << "cluster\n";
         for (int i = 0; i < numClusters; i++) {
             for (int j = 0; j < sizes[i]; j++) {
                 for (auto k = clusters[i][j].begin(); k != clusters[i][j].end(); ++k)
@@ -209,16 +209,20 @@ vector<vector<vector<double>>> runKMeans(vector<vector<double>> elements, int di
 int main() {
     // assume we have vectors here
     vector<vector<double>> elems;
+    int dim = 5;
+    int numClusters = 5;
 
     for (int i = 0; i < 1000; i++) {
-        vector<double> addition(DIM, 0);
-        for (int j = 0; j < DIM; j++) {
+        vector<double> addition(dim, 0);
+        for (int j = 0; j < dim; j++) {
             addition[j] = ((double) rand() / (RAND_MAX)); 
         }
         elems.push_back(addition);
     }
 
-    runKMeans(elems, DIM, NUM_CLUSTERS, false, "kmeans_output.txt");
+    
+
+    runKMeans(elems, dim, NUM_CLUSTERS, true, "kmeans_output.txt");
 
 
     return 0;
