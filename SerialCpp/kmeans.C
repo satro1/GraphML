@@ -95,7 +95,7 @@ int getIndexOfClosestCentroid(vector<vector<double>> centroids, vector<double> e
     return indexOfClosest;
 }
 
-vector<vector<vector<double>>> runKMeans(vector<vector<double>> elements, int dimensionOfVectors, int numClusters, bool verbose) {
+vector<vector<vector<double>>> runKMeans(vector<vector<double>> elements, int dimensionOfVectors, int numClusters, bool verbose, string fileOut) {
     // generate random centroids here
     vector<vector<double>> centroids = getRandomCentroids(elements, dimensionOfVectors);
 
@@ -178,11 +178,12 @@ vector<vector<vector<double>>> runKMeans(vector<vector<double>> elements, int di
         }    
     }
 
-    if (false) {
+    if (fileOut.length() > 0) {
         // write the clusters to a file
         ofstream output;
-        output.open("kmeans_output.txt");
-        output << "x,y,cluster\n";
+        output.open(fileOut);
+        for (int i = 0; i < dimensionOfVectors; i++) cout << "x" << i << ",";
+        cout << ",cluster\n";
         for (int i = 0; i < numClusters; i++) {
             for (int j = 0; j < sizes[i]; j++) {
                 for (auto k = clusters[i][j].begin(); k != clusters[i][j].end(); ++k)
@@ -217,7 +218,7 @@ int main() {
         elems.push_back(addition);
     }
 
-    runKMeans(elems, DIM, NUM_CLUSTERS, false);
+    runKMeans(elems, DIM, NUM_CLUSTERS, false, "kmeans_output.txt");
 
 
     return 0;
