@@ -80,7 +80,7 @@ void rotate(double** matrix, double** p, int k, int l, int n) {
 
 /****************************************************************
  * Computes eigenvalues and eigenvectors
- * matrix - input matrix of size n*n
+ * matrix - input matrix of size n*n, also output of eigenvectors.
  * evalues - array of size n, will be filled with eigenvalues
  * n - size of matrix, where matrix is n*n
  ****************************************************************/
@@ -104,52 +104,4 @@ double** eigen(double** matrix, double* evalues, int n) {
 
     for (int i=0; i<n; i++) { evalues[i] = matrix[i][i]; } // make diagonals 1
     return p;
-}
-
-int main(int argc, char *argv[]) {
-    // Check args.
-    if (argc != 5) {
-        printf("Usage ./eigen <is_sim_matrix = 0> <num_nodes> <filename of adj list>");
-        exit(1);
-    }
-    bool is_sim_matrix = atoi(argv[1]) == 0;
-    int num_nodes = atoi(argv[2]);
-    char *input_filename = argv[3];
-    char *output_filename = argv[4];
-
-    // Read in file.
-    double **matrix = alloc_2d_array(num_nodes, num_nodes);
-    FILE *fp = fopen(input_filename, "r");
-    if (fp == NULL) {
-        printf("Failed to open provided file.\n");
-        exit(1);
-    }
-
-    if (is_sim_matrix) {
-        for (int r = 0; r < num_nodes; r++) {
-            for (int c = 0; c < num_nodes; c++) {
-                fscanf(fp, "%lf%*c", &matrix[r][c]);
-            }
-        }  
-    } else {
-        // TODO(iancostello): Support loading from similarity list.
-        printf("Adjacency list not yet supported.");
-        exit(0);
-    }
-    fclose(fp);
-
-    // Create Laplacian.  
-    double* evalues = (double*) calloc(num_nodes, sizeof(double));
-    matrix = eigen(matrix, evalues, num_nodes);
-
-    // Output to adjacency matrix as file.
-    FILE *output = fopen(output_filename, "w");
-    for (int r = 0; r < num_nodes; r++) {
-        for (int c = 0; c < num_nodes; c++) {
-            fprintf(output, "%lf ", matrix[r][c]);
-        }
-        fprintf(output, "\n");
-    }
-    fclose(output);
-
 }

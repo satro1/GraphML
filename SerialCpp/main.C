@@ -7,11 +7,17 @@
 #include <string.h>
 #include <assert.h>
 #include <queue>
+#include <vector>
+#include <string>
 
 #include <set>
 
 #include "similarity_calc.h"
 #include "utils.h"
+#include "eigen.h"
+#include "kmeans.h"
+
+#define DEBUG true
 
 /**
  * Sample code that reads in matrix, computes laplacian of similarity matrix
@@ -19,15 +25,17 @@
  */ 
 int main(int argc, char **argv) {
     // Check args.
-    if (argc != 6) {
-        printf("Usage ./sim_calc <is_sim_matrix = 0> <num_nodes> <filename of adj list>");
+    if (argc != 7) {
+        printf("Usage ./sim_calc <is_sim_matrix = 0> <num_nodes> <num_clusters> <filename of adj list>");
         exit(1);
     }
     bool is_sim_matrix = atoi(argv[1]) == 0;
     int num_nodes = atoi(argv[2]);
-    char *input_filename = argv[3];
-    int epsilon = atoi(argv[4]);
-    char *output_filename = argv[5];
+    int num_clusters = atoi(argv[3]);
+    char *input_filename = argv[4];
+    double epsilon = (double) atoi(argv[5]);
+    char *output_filename = argv[6];
+    if (DEBUG) printf("Parsed args.\n");
 
     // Read in file.
     double **matrix = alloc_2d_array(num_nodes, num_nodes);
@@ -48,17 +56,40 @@ int main(int argc, char **argv) {
         exit(0);
     }
     fclose(fp);
+    if (DEBUG) printf("Read in matrix.\n");
 
     // Create Laplacian.  
     double **sim_laplacian = build_epsilon_neighborhood(matrix, num_nodes, epsilon);
+    if (DEBUG) printf("Computed laplacian.\n");
+    
+    // Compute eigenvectors.
+    double* evalues = (double*) calloc(num_nodes, sizeof(double));
+    eigen(sim_laplacian, evalues, num_nodes);
+    if (DEBUG) printf("Computed eigenvectors.\n");
 
-    // Output to adjacency matrix as file.
-    FILE *output = fopen(output_filename, "w");
-    for (int r = 0; r < num_nodes; r++) {
-        for (int c = 0; c < num_nodes; c++) {
-            fprintf(output, "%lf ", sim_laplacian[r][c]);
+    // Create n points of size k
+    std::vector<std::vector<double>> eigenpoints;
+    for (int n = 0; n < num_nodes; n++) {
+        std::vector<double> data;
+        for (int k = 0; k < num_clusters; k++) {
+            data.push_back(sim_laplacian[n][k]);
         }
-        fprintf(output, "\n");
+        eigenpoints.push_back(data);
     }
-    fclose(output);
+    if (DEBUG) printf("Computed points.\n");
+
+    // Compute K-Means
+    std::string output(output_filename);
+    runKMeans(eigenpoints, num_clusters, num_clusters, false, output);
+    if (DEBUG) printf("Computed clusters.\n");
+
+    // Output clusters.
+    // FILE *output = fopen(output_filename, "w");
+    // for (int r = 0; r < num_nodes; r++) {
+    //     for (int c = 0; c < num_nodes; c++) {
+    //         fprintf(output, "%lf ", sim_laplacian[r][c]);
+    //     }
+    //     fprintf(output, "\n");
+    // }
+    // fclose(output);
 }
