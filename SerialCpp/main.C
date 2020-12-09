@@ -9,6 +9,7 @@
 #include <queue>
 #include <vector>
 #include <string>
+#include <chrono>
 
 #include <set>
 
@@ -59,13 +60,16 @@ int main(int argc, char **argv) {
     if (DEBUG) printf("Read in matrix.\n");
 
     // Create Laplacian.  
+    auto start_simulation = std::chrono::high_resolution_clock::now();
     double **sim_laplacian = build_epsilon_neighborhood(matrix, num_nodes, epsilon);
     if (DEBUG) printf("Computed laplacian.\n");
-    
+    auto end_laplacian = std::chrono::high_resolution_clock::now();
+
     // Compute eigenvectors.
     double* evalues = (double*) calloc(num_nodes, sizeof(double));
     eigen(sim_laplacian, evalues, num_nodes);
     if (DEBUG) printf("Computed eigenvectors.\n");
+    auto end_eigen = std::chrono::high_resolution_clock::now();
 
     // Create n points of size k
     std::vector<std::vector<double>> eigenpoints;
@@ -76,15 +80,23 @@ int main(int argc, char **argv) {
         }
         eigenpoints.push_back(data);
     }
-    if (DEBUG) printf("Computed points.\n");
+    if (DEBUG) printf("Computed points. %d points of length %d\n", 
+                      eigenpoints.size(), eigenpoints.at(0).size());
 
     // Compute K-Means
-    std::string output(output_filename);
-    runKMeans(eigenpoints, num_clusters, num_clusters, false, output);
+    std::string km_output(output_filename);
+    std::vector<std::vector<std::vector<double>>> clusters = 
+        runKMeans(eigenpoints, num_clusters, num_clusters, false, km_output);
+    auto end_kmeans = std::chrono::high_resolution_clock::now();
     if (DEBUG) printf("Computed clusters.\n");
+    
 
     // Output clusters.
-    // FILE *output = fopen(output_filename, "w");
+    FILE *output = fopen(output_filename, "w");
+    // for (int cluster = 0; cluster < num_clusters; c++) {
+
+    // }
+
     // for (int r = 0; r < num_nodes; r++) {
     //     for (int c = 0; c < num_nodes; c++) {
     //         fprintf(output, "%lf ", sim_laplacian[r][c]);
