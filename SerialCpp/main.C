@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
             }
         }  
     } else {
-        // TODO(iancostello): Support loading from similarity list.
+        // ERROR USING QUEUES, CHECK Support loading from -*similarity*- ADJACENCY list.
 	for (int r = 0; r < num_nodes; r++){
 		for(int c = 0; c < num_nodes; c++){
 			fscanf(fp, "$lf%*c", &temp_matrix[r][c]);
