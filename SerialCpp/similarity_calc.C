@@ -93,6 +93,7 @@ void _recursive_laplacian_bfs(double **const matrix, double **sim_matrix,
 double **build_epsilon_neighborhood(double **const matrix, int num_nodes,
                                     int epsilon) {
   double **sim_matrix = alloc_2d_array(num_nodes, num_nodes);
+  #pragma omp parallel for
   for (int n = 0; n < num_nodes; n++) {
     _recursive_laplacian_bfs(matrix, sim_matrix, num_nodes, n, epsilon);
   }

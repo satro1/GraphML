@@ -1,5 +1,5 @@
-CXX=c++
-CXX_FLAGS = -Wall -std=c++11
+CXX=/usr/local/opt/llvm/bin/clang++
+CXX_FLAGS = -fopenmp -O2 -Wall -std=c++11 -I/usr/local/opt/llvm/include -L/usr/local/opt/llvm/lib
 FILES = main.C similarity_calc.C eigen.C kmeans.C utils.C
 
 all: combined
@@ -9,7 +9,6 @@ combined: $(FILES)
 
 run: all
 	./spectral 0 5 3 ../SampleInput/small5x5.input 1 output.txt
-
 
 similarity_calc: similarity_calc.C
 	$(CXX) $(CXX_FLAGS) similarity_calc.C $(FILES) -o similarity_calc

@@ -92,7 +92,7 @@ int getIndexOfClosestCentroid(vector<vector<double>> centroids, vector<double> e
     double minDistance = 0;
 
     // TODO Going to need a private clause i believe
-    #omp parallel for
+    #pragma omp parallel for
     for (int i = 0; i < centroids.size(); i++) {
         double tempDistance = distanceBetweenVectors(centroids[i], element, dim);
         if (tempDistance < minDistance || indexOfClosest == -1) {
@@ -111,12 +111,12 @@ vector<vector<vector<double>>> runKMeans(vector<vector<double>> elements, int di
     
     vector<vector<double>> centroids = getRandomCentroids(elements, dimensionOfVectors, numClusters);
 
-    auto t_end = std::chrono::high_resolution_clock::now();
-    cout << "Time to generate the random centroids: "
-              << std::chrono::duration<double, std::milli>(t_end-t_start).count()
-              << " ms\n";
-
     if (verbose) {
+        auto t_end = std::chrono::high_resolution_clock::now();
+        cout << "Time to generate the random centroids: "
+                << std::chrono::duration<double, std::milli>(t_end-t_start).count()
+                << " ms\n";
+
         cout << "Random centroids: \n";
         for (int i = 0; i < centroids.size(); i++) {
             for (auto j = centroids[i].begin(); j != centroids[i].end(); ++j)

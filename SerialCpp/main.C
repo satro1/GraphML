@@ -2,6 +2,7 @@
  * Usage: ./similarity_calc <is_sim_matrix> <num_nodes> <graph_input_file> <epsilon> <output_file>
  */ 
 #include <stdlib.h>
+#include <iostream>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
@@ -10,15 +11,17 @@
 #include <vector>
 #include <string>
 #include <chrono>
-
 #include <set>
+
+#include "omp.h"
+
 
 #include "similarity_calc.h"
 #include "utils.h"
 #include "eigen.h"
 #include "kmeans.h"
 
-#define DEBUG true
+#define DEBUG false
 
 /**
  * Sample code that reads in matrix, computes laplacian of similarity matrix
@@ -37,6 +40,9 @@ int main(int argc, char **argv) {
     double epsilon = (double) atoi(argv[5]);
     char *output_filename = argv[6];
     if (DEBUG) printf("Parsed args.\n");
+
+    int total_processes = omp_get_max_threads();
+    if (DEBUG) printf("Running on %d threads\n", total_processes);
 
     // Read in file.
     double **matrix = alloc_2d_array(num_nodes, num_nodes);
@@ -80,8 +86,6 @@ int main(int argc, char **argv) {
         }
         eigenpoints.push_back(data);
     }
-    if (DEBUG) printf("Computed points. %d points of length %d\n", 
-                      eigenpoints.size(), eigenpoints.at(0).size());
 
     // Compute K-Means
     std::string km_output(output_filename);
@@ -91,17 +95,19 @@ int main(int argc, char **argv) {
     if (DEBUG) printf("Computed clusters.\n");
     
 
+    // Output Timing
+    double total_time = std::chrono::duration<double, std::milli>(end_kmeans-start_simulation).count();
+    double sim_time = std::chrono::duration<double, std::milli>(end_laplacian-start_simulation).count();
+    double eig_tmime = std::chrono::duration<double, std::milli>(end_eigen-end_laplacian).count();
+    double kmeans_time = std::chrono::duration<double, std::milli>(end_kmeans-end_eigen).count();
+    std::cout << "Timing for " << total_processes << " threads...\n";
+    std::cout << "Total Execution Time: " << total_time << "ms\n";
+    std::cout << "Laplacian Time: " << sim_time << "ms\n";
+    std::cout << "Eigen Time: " << eig_tmime << "ms\n";
+    std::cout << "k-Means Time: " << kmeans_time << "ms\n";
     // Output clusters.
-    FILE *output = fopen(output_filename, "w");
+    // FILE *output = fopen(output_filename, "w");
     // for (int cluster = 0; cluster < num_clusters; c++) {
 
     // }
-
-    // for (int r = 0; r < num_nodes; r++) {
-    //     for (int c = 0; c < num_nodes; c++) {
-    //         fprintf(output, "%lf ", sim_laplacian[r][c]);
-    //     }
-    //     fprintf(output, "\n");
-    // }
-    // fclose(output);
 }

@@ -32,6 +32,7 @@ for node, edges in graph_adjacency_list.items():
 ### Helper funtions
 def visualize_numpy(graph):
   nx.draw(nx.from_numpy_matrix(graph), with_labels=True, font_weight='bold')
+  plt.show()
 
 def preserve_only_connections_in_graph(graph, clusters):
   """ Preserves only connections between noes in the same cluster. """
@@ -95,12 +96,12 @@ def build_epsilon_neighborhood(graph, epsilon):
 # Evaluate
 visualize_numpy(graph)
 
-# Should match original graph
-visualize_numpy(build_epsilon_neighborhood(graph, 1))
-# All nodes should be connected to nodes distance 2
+# # Should match original graph
+# visualize_numpy(build_epsilon_neighborhood(graph, 1))
+# # All nodes should be connected to nodes distance 2
 visualize_numpy(build_epsilon_neighborhood(graph, 2))
-# Should be a completely connected graph
-visualize_numpy(build_epsilon_neighborhood(graph, 6))
+# # Should be a completely connected graph
+# visualize_numpy(build_epsilon_neighborhood(graph, 6))
 
 from sklearn.cluster import KMeans
 def spectral_clustering(graph, clusters_to_create, epsilon_distance = 3):
