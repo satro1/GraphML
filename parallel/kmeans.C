@@ -26,7 +26,7 @@ vector<vector<double>> getRandomCentroids(vector<vector<double>> nodes, int dim,
         max[i] = nodes[0][i];
     }
 
-    #omp parallel for
+    #omp parallel for collapse(2)
     for (int i = 0; i < nodes.size(); i++) {
         for (int j = 0; j < dim; j++) {
             if (nodes[i][j] < min[j]) {
@@ -57,12 +57,12 @@ vector<vector<double>> getRandomCentroids(vector<vector<double>> nodes, int dim,
  * Method to get a new mean given a cluster
  * */
 vector<double> getMean(vector<vector<double>> cluster, int dim) {
-    int numElem = 0;
+    int numElem = cluster.size();
     vector<double> mean(dim, 0);
 
-    // TODO some  loop but were going to need some private clause
+    #omp parallel for
     for (int i = 0; i < cluster.size(); i++) {
-        numElem++;
+        #omp parallel for
         for (int j = 0; j < dim; j++) {
             mean[j] += cluster[i][j];
         }
@@ -134,7 +134,8 @@ vector<vector<vector<double>>> runKMeans(vector<vector<double>> elements, int di
     t_start = std::chrono::high_resolution_clock::now();
 
     // place the elements into their initial clusters
-    #omp parallel for
+    // TODO something with shared here
+    #omp parallel for shared(clusters)
     for (int i = 0; i < elements.size(); i++) {
         // find which centroid its closest to
         int indexOfClosestCentroid = getIndexOfClosestCentroid(centroids, elements[i], dimensionOfVectors);
