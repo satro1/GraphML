@@ -66,16 +66,16 @@ int main(int argc, char **argv) {
     if (DEBUG) printf("Read in matrix.\n");
 
     // Create Laplacian.  
-    auto start_simulation = std::chrono::high_resolution_clock::now();
+    double start_simulation = omp_get_wtime(); 
     double **sim_laplacian = build_epsilon_neighborhood(matrix, num_nodes, epsilon);
     if (DEBUG) printf("Computed laplacian.\n");
-    auto end_laplacian = std::chrono::high_resolution_clock::now();
+    double end_laplacian = omp_get_wtime();
 
     // Compute eigenvectors.
     double* evalues = (double*) calloc(num_nodes, sizeof(double));
     eigen(sim_laplacian, evalues, num_nodes);
     if (DEBUG) printf("Computed eigenvectors.\n");
-    auto end_eigen = std::chrono::high_resolution_clock::now();
+    double end_eigen = omp_get_wtime();
 
     // Create n points of size k
     std::vector<std::vector<double>> eigenpoints;
@@ -91,20 +91,20 @@ int main(int argc, char **argv) {
     std::string km_output(output_filename);
     std::vector<std::vector<std::vector<double>>> clusters = 
         runKMeans(eigenpoints, num_clusters, num_clusters, false, km_output);
-    auto end_kmeans = std::chrono::high_resolution_clock::now();
+    double end_kmeans = omp_get_wtime();
     if (DEBUG) printf("Computed clusters.\n");
     
 
     // Output Timing
-    double total_time = std::chrono::duration<double, std::milli>(end_kmeans-start_simulation).count();
-    double sim_time = std::chrono::duration<double, std::milli>(end_laplacian-start_simulation).count();
-    double eig_tmime = std::chrono::duration<double, std::milli>(end_eigen-end_laplacian).count();
-    double kmeans_time = std::chrono::duration<double, std::milli>(end_kmeans-end_eigen).count();
+    double total_time = end_kmeans-start_simulation;
+    double sim_time = end_laplacian-start_simulation;
+    double eig_tmime = end_eigen-end_laplacian;
+    double kmeans_time = end_kmeans-end_eigen;
     std::cout << "Timing for " << total_processes << " threads...\n";
-    std::cout << "Total Execution Time: " << total_time << "ms\n";
-    std::cout << "Laplacian Time: " << sim_time << "ms\n";
-    std::cout << "Eigen Time: " << eig_tmime << "ms\n";
-    std::cout << "k-Means Time: " << kmeans_time << "ms\n";
+    std::cout << "Total Execution Time: " << 1000 * total_time << "ms\n";
+    std::cout << "Laplacian Time: " << 1000 * sim_time << "ms\n";
+    std::cout << "Eigen Time: " << 1000 * eig_tmime << "ms\n";
+    std::cout << "k-Means Time: " << 1000 * kmeans_time << "ms\n";
     // Output clusters.
     // FILE *output = fopen(output_filename, "w");
     // for (int cluster = 0; cluster < num_clusters; c++) {

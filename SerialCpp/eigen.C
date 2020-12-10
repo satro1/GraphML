@@ -15,6 +15,7 @@
 double maxElem(double** matrix, int* k, int* l, int n) {
     double max = 0.0;
 
+    #pragma omp parallel for reduction(max:max) collapse(2)
     for (int i=0; i<n-1; i++) {
         for (int j=i+1; j<n; j++) {
             if (abs(matrix[i][j]) >= max) {
