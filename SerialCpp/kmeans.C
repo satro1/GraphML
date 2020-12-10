@@ -240,20 +240,18 @@ vector<vector<vector<double>>> runKMeans(vector<vector<double>> elements, int di
 
 // int main() {
 //     // assume we have vectors here
-//     vector<vector<double>> elems;
-//     int dim = 100;
-//     int numClusters = 5;
-
-//     for (int i = 0; i < 100000; i++) {
-//         vector<double> addition(dim, 0);
-//         for (int j = 0; j < dim; j++) {
-//             addition[j] = ((double) rand() / (RAND_MAX)); 
-//         }
-//         elems.push_back(addition);
+ //    vector<vector<double>> elems;
+  //   int dim = 100;
+  //   int numClusters = 5;
+    // for (int i = 0; i < 100000; i++) {
+      //   vector<double> addition(dim, 0);
+        // for (int j = 0; j < dim; j++) {
+          //   addition[j] = ((double) rand() / (RAND_MAX)); 
+        // }
+        // elems.push_back(addition);
 //     }
 
 //     runKMeans(elems, dim, numClusters, false, "kmeans_output.txt");
-
-//     return 0;
+  //   return 0;
 // }
 

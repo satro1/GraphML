@@ -45,6 +45,7 @@ int main(int argc, char **argv) {
     if (DEBUG) printf("Running on %d threads\n", total_processes);
 
     // Read in file.
+	double** temp_matrix = alloc_2d_array(num_nodes, num_nodes);
     double **matrix = alloc_2d_array(num_nodes, num_nodes);
     FILE *fp = fopen(input_filename, "r");
     if (fp == NULL) {
@@ -58,9 +59,51 @@ int main(int argc, char **argv) {
             }
         }  
     } else {
-        // TODO(iancostello): Support loading from similarity list.
-        printf("Adjacency list not yet supported.");
-        exit(0);
+        // ERROR USING QUEUES, CHECK Support loading from -*similarity*- ADJACENCY list.
+	for (int r = 0; r < num_nodes; r++){
+		for(int c = 0; c < num_nodes; c++){
+			fscanf(fp, "$lf%*c", &temp_matrix[r][c]);
+		}
+	}
+	for(int node = 0; node < num_nodes; node++){
+		std::queue<std::vector<double>> q;
+		std::vector<double> q0;
+		q0.push_back(double(node));
+		q0.push_back(epsilon);
+		q.push(q0);
+		bool visited_nodes[num_nodes] = {0};
+		int num_visited = -1;
+
+		while(!q.empty()){
+			std::vector<double> temp = q.pop();
+			double next_node = temp[0];
+			double dist = temp[1];
+
+			if(visited_nodes[int(next_node)]==0){
+				//Handle visit
+				num_visited += 1;
+				matrix[int(node)][int(next_node)] = -1;
+				visited_nodes[int(next_node)] = 1;
+
+				//Explore neighbours
+				if(dist != 0){
+					for(int neighbour = 0; neighbour < num_nodes; neighbour++){
+						if(neighbour != next_node && visited_nodes[neighbour]==0){
+							double next_dist = temp_matrix[int(next_node)][neighbour];
+							if(next_dist > 0 && (dist - next_dist) >= 0){
+								//Visit edge
+								std::vector<double> qi;
+								qi.push_back(double(neighbour));
+								qi.push_back(double(dist - next_dist));
+								q.push(qi);
+							}
+						}
+					}
+				}
+			}
+		}
+		matrix[node][node] = num_visited;
+	}
     }
     fclose(fp);
     if (DEBUG) printf("Read in matrix.\n");
