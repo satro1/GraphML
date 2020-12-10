@@ -1,5 +1,5 @@
-CXX=g++
-CXX_FLAGS = -fopenmp -O2 -Wall -lm
+CXX=/usr/local/opt/llvm/bin/clang++
+CXX_FLAGS = -fopenmp -O2 -Wall -std=c++11 -I/usr/local/opt/llvm/include -L/usr/local/opt/llvm/lib
 FILES = main.C similarity_calc.C eigen.C kmeans.C utils.C
 
 all: combined
@@ -7,8 +7,10 @@ all: combined
 combined: $(FILES)
 	$(CXX) $(CXX_FLAGS) $(FILES) -o spectral
 
+size=64
+
 run: all
-	./spectral 0 5 3 ../TestInput/size512/input_512x512_1.input 1 output.txt
+	./spectral 0 5 3 ../TestInput/size${size}/input_${size}x${size}_1.input 1 output.txt
 
 social_network: all
 	./spectral 0 37000 100 ~/Downloads/git_web_ml/social_network.csv 1 output.txt

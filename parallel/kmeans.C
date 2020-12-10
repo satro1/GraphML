@@ -20,13 +20,13 @@ vector<vector<double>> getRandomCentroids(vector<vector<double>> nodes, int dim,
     vector<double> min(dim, 0);
     vector<double> max(dim, 0);
 
-    #omp parallel for
+    #pragma omp parallel for
     for (int i = 0; i < dim; i++) {
         min[i] = nodes[0][i];
         max[i] = nodes[0][i];
     }
 
-    #omp parallel for collapse(2)
+    #pragma omp parallel for collapse(2)
     for (int i = 0; i < nodes.size(); i++) {
         for (int j = 0; j < dim; j++) {
             if (nodes[i][j] < min[j]) {
@@ -42,7 +42,7 @@ vector<vector<double>> getRandomCentroids(vector<vector<double>> nodes, int dim,
     srand(0);
 
     vector<vector<double>> ret(numClusters, vector<double>(dim, 0));
-    #omp parallel for collapse(2)
+    #pragma omp parallel for collapse(2)
     for (int i = 0; i < numClusters; i++) {
         for (int j = 0; j < dim; j++) {
             // set this to a random value between min[j] and max[j]
@@ -60,15 +60,14 @@ vector<double> getMean(vector<vector<double>> cluster, int dim) {
     int numElem = cluster.size();
     vector<double> mean(dim, 0);
 
-    #omp parallel for
+    #pragma omp parallel for
     for (int i = 0; i < cluster.size(); i++) {
-        #omp parallel for
         for (int j = 0; j < dim; j++) {
             mean[j] += cluster[i][j];
         }
     }
 
-    #omp parallel for
+    #pragma omp parallel for
     for (int i = 0; i < dim; i++) {
         mean[i] /= numElem;
     }
@@ -79,7 +78,7 @@ vector<double> getMean(vector<vector<double>> cluster, int dim) {
 double distanceBetweenVectors(vector<double> a, vector<double> b, int dim) {
     double dist = 0;
     
-    #omp parallel for
+    #pragma omp parallel for
     for (int i = 0; i < dim; i++) {
         dist += pow((a[i] - b[i]), 2);
     }
