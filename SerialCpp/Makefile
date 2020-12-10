@@ -1,5 +1,5 @@
-CXX=/usr/local/opt/llvm/bin/clang++
-CXX_FLAGS = -fopenmp -O2 -Wall -std=c++11 -I/usr/local/opt/llvm/include -L/usr/local/opt/llvm/lib
+CXX=g++
+CXX_FLAGS = -fopenmp -O2 -Wall -lm
 FILES = main.C similarity_calc.C eigen.C kmeans.C utils.C
 
 all: combined
