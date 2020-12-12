@@ -36,8 +36,13 @@ struct QueueItem {
  *  curr_node: Current node to run BFS on.
  *  episilon: Max distance to traverse.
  */
+#if ADJ_MATRIX
 void _recursive_laplacian_bfs(double **const matrix, double **sim_matrix,
+                              int num_nodes, int curr_node, double epsilon) {                                    int epsilon) {
+#else
+void _recursive_laplacian_bfs(std::vector<std::vector<int>> matrix, double **sim_matrix,
                               int num_nodes, int curr_node, double epsilon) {
+#endif
   // Setup BFS data structures.
   std::set<int> visited_nodes;
   std::queue<struct QueueItem> queue;
@@ -61,14 +66,24 @@ void _recursive_laplacian_bfs(double **const matrix, double **sim_matrix,
       // Visit the nodes neighbors.
       if (next_visit.distance != 0) {
         for (int n = 0; n < num_nodes; n++) {
+          #if ADJ_MATRIX
           if (n != next_visit.next_node) {
+            
             double next_distance = matrix[next_visit.next_node][n];
             // Can only make jumps if remaining distance > edge weight
             if (next_distance > 0 && next_visit.distance - next_distance >= 0) {
               // Traverse edge.
               queue.push((QueueItem){n, next_visit.distance - next_distance});
             }
+            
           }
+          #else
+          if (next_visit.distance >= 1) {
+            for (int n : matrix.at(next_visit.next_node)) {
+              queue.push((QueueItem){n, next_visit.distance - 1});
+            }
+          }
+          #endif
         }
       }
     }
@@ -90,12 +105,14 @@ void _recursive_laplacian_bfs(double **const matrix, double **sim_matrix,
  * Returns:
  *  sim_matrix: Filled laplacian similarity matrix of provided graph.
  */
-double **build_epsilon_neighborhood(double **const matrix, int num_nodes,
+#if ADJ_MATRIX
+void build_epsilon_neighborhood(double **const matrix, double **const sim_matrix, int num_nodes,
                                     int epsilon) {
-  double **sim_matrix = alloc_2d_array(num_nodes, num_nodes);
+#else
+void build_epsilon_neighborhood(std::vector<std::vector<int>> matrix, double **const sim_matrix, int num_nodes, int epsilon) {
+#endif
   #pragma omp parallel for schedule(guided, num_nodes / 20)
   for (int n = 0; n < num_nodes; n++) {
     _recursive_laplacian_bfs(matrix, sim_matrix, num_nodes, n, epsilon);
   }
-  return sim_matrix;
 }

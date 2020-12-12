@@ -20,6 +20,7 @@
 #include "utils.h"
 #include "eigen.h"
 #include "kmeans.h"
+#include "impl.h"
 
 #define DEBUG false
 
@@ -45,63 +46,70 @@ int main(int argc, char **argv) {
     if (DEBUG) printf("Running on %d threads\n", total_processes);
 
     // Read in file.
+    #if ADJ_MATRIX
     double **matrix = alloc_2d_array(num_nodes, num_nodes);
+    #else
+    std::vector<std::vector<int>> matrix(num_nodes);
+    #endif
     FILE *fp = fopen(input_filename, "r");
     if (fp == NULL) {
         printf("Failed to open provided file.\n");
         exit(1);
     }
     if (is_sim_matrix) {
+        double next_value;
         for (int r = 0; r < num_nodes; r++) {
             for (int c = 0; c < num_nodes; c++) {
-                fscanf(fp, "%lf%*c", &matrix[r][c]);
+                fscanf(fp, "%lf%*c", &next_value);
+                #if ADJ_MATRIX
+                    matrix[r][c] = next_value;
+                #else
+                    if (next_value != 0) {
+                        matrix[r].push_back(c);
+                    }
+                    
+                #endif
+                
             }
         }  
     } else {
-	/*
-        example 5x5 adjacency list looks like:(first col = size(row), row_number = node_number)
-        3 3 4 1
-        2 0 2
-        2 4 1
-        2 0 4
-        3 3 2 1
-
-        becomes:
-        0 1 0 1 1
-        1 0 1 0 0
-        0 1 0 0 1
-        1 0 0 0 1
-        1 0 1 1 0
-        */
-        double temp;
-        int size;
-        for(int curr = 0; curr < num_nodes; curr++){
-            matrix[curr][curr] = 0.0;
-            fscanf(fp, "%l", &size)
-            for(int neighbour = 0; neighbour < size; neighbour++){
-                fscanf(fp, "%lf", &temp);
-                matrix[curr][int(temp)] = 1.0;
-                matrix[int(temp)][curr] = 1.0;
+        int num_neighbors;
+        int next_neighbor;
+        for(int n = 0; n < num_nodes; n++){
+            fscanf(fp, "%d%*c", &num_neighbors);
+            for (int item = 0; item < num_neighbors; item++){
+                fscanf(fp, "%d%*c", &next_neighbor);
+                #if ADJ_MATRIX
+                    matrix[n][next_neighbor] = 1.0;
+                    matrix[next_neighbor][n] = 1.0;
+                #else
+                    matrix[n].push_back(next_neighbor);
+                #endif
+                
             }
         }
     }
     fclose(fp);
     if (DEBUG) printf("Read in matrix.\n");
 
-    // Create Laplacian.  
+    // Preallocate.
+    double **sim_laplacian = alloc_2d_array(num_nodes, num_nodes);
+    double* evalues = (double*) calloc(num_nodes, sizeof(double));
+    std::vector<std::vector<double>> eigenpoints;
+
+    // Create Laplacian. 
     double start_simulation = omp_get_wtime(); 
-    double **sim_laplacian = build_epsilon_neighborhood(matrix, num_nodes, epsilon);
+    build_epsilon_neighborhood(matrix, sim_laplacian, num_nodes, epsilon);
     if (DEBUG) printf("Computed laplacian.\n");
     double end_laplacian = omp_get_wtime();
 
     // Compute eigenvectors.
-    double* evalues = (double*) calloc(num_nodes, sizeof(double));
+    
     eigen(sim_laplacian, evalues, num_nodes);
     if (DEBUG) printf("Computed eigenvectors.\n");
     double end_eigen = omp_get_wtime();
 
     // Create n points of size k
-    std::vector<std::vector<double>> eigenpoints;
     for (int n = 0; n < num_nodes; n++) {
         std::vector<double> data;
         for (int k = 0; k < num_clusters; k++) {
@@ -117,7 +125,6 @@ int main(int argc, char **argv) {
     double end_kmeans = omp_get_wtime();
     if (DEBUG) printf("Computed clusters.\n");
     
-
     // Output Timing
     double total_time = end_kmeans-start_simulation;
     double sim_time = end_laplacian-start_simulation;
