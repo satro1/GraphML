@@ -58,11 +58,30 @@ int main(int argc, char **argv) {
             }
         }  
     } else {
-        // ERROR USING QUEUES, CHECK Support loading from -*similarity*- ADJACENCY list.
-        // double temp;
-        for (int r = 0; r < num_nodes; r++) {
-            for (int c = 0; c < num_nodes; c++) {
-                fscanf(fp, "%lf%*c", &matrix[r][c]);
+	/*
+        example 5x5 adjacency list looks like:(first col = size(row), row_number = node_number)
+        3 3 4 1
+        2 0 2
+        2 4 1
+        2 0 4
+        3 3 2 1
+
+        becomes:
+        0 1 0 1 1
+        1 0 1 0 0
+        0 1 0 0 1
+        1 0 0 0 1
+        1 0 1 1 0
+        */
+        double temp;
+        int size;
+        for(int curr = 0; curr < num_nodes; curr++){
+            matrix[curr][curr] = 0.0;
+            fscanf(fp, "%l", &size)
+            for(int neighbour = 0; neighbour < size; neighbour++){
+                fscanf(fp, "%lf", &temp);
+                matrix[curr][int(temp)] = 1.0;
+                matrix[int(temp)][curr] = 1.0;
             }
         }
     }
