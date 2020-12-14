@@ -15,7 +15,7 @@
 double maxElem(double** matrix, int* k, int* l, int n) {
     double max = 0.0;
 
-    #pragma omp parallel for reduction(max:max) collapse(2)
+    #pragma omp parallel for reduction(max:max)
     for (int i=0; i<n-1; i++) {
         for (int j=i+1; j<n; j++) {
             if (abs(matrix[i][j]) >= max) {
@@ -85,17 +85,17 @@ void rotate(double** matrix, double** p, int k, int l, int n) {
  * evalues - array of size n, will be filled with eigenvalues
  * n - size of matrix, where matrix is n*n
  ****************************************************************/
-double** eigen(double** matrix, double* evalues, int n) {
-    int maxRot = 5*n*n;       // Set limit on number of rotations
-    double tol = 0.000000001; // 1e-9
+double** eigen(double** matrix, double ** p, double* evalues, int n) {
+    int maxRot = 5*n;       // Set limit on number of rotations
+    double tol = 0.000001; // 1e-6
 
     // Initialize transformation matrix
-    double** p = alloc_2d_array(n, n);
     for (int i=0; i<n; i++) { p[i][i] = 1.0; } // make diagonals 1
     
     int k = 0;
     int l = 0;
     double aMax = 0.0;
+
 
     for (int i=0; i<maxRot; i++) { // Jacobi rotation loop
         aMax = maxElem(matrix, &k, &l, n);

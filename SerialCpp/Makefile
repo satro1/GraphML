@@ -7,10 +7,13 @@ all: combined
 combined: $(FILES)
 	$(CXX) $(CXX_FLAGS) $(FILES) -o spectral
 
-size=64
+size=512
+
+simp: all
+	./spectral 0 5 3 ../SampleInput/small5x5.input 3 output.txt
 
 run: all
-	./spectral 0 5 3 ../TestInput/sim_mtx/size${size}/input_${size}x${size}_1.input 1 output.txt
+	./spectral 0 $(size) 3 ../TestInput/sim_mtx/size${size}/input_${size}x${size}_1.input 3 output.txt
 
 social_network: all
 	./spectral 0 37000 100 ~/Downloads/git_web_ml/social_network.csv 1 output.txt

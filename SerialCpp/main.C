@@ -22,7 +22,16 @@
 #include "kmeans.h"
 #include "impl.h"
 
-#define DEBUG false
+#define DEBUG true
+
+void print_array(double **matrix, int num_nodes) {
+    for (int r = 0; r < num_nodes; r++) {
+        for (int c = 0; c < num_nodes; c++) {
+            printf("%f ", matrix[r][c]);
+        }
+        printf("\n");
+    }
+} 
 
 /**
  * Sample code that reads in matrix, computes laplacian of similarity matrix
@@ -92,23 +101,32 @@ int main(int argc, char **argv) {
     fclose(fp);
     if (DEBUG) printf("Read in matrix.\n");
 
-    // Preallocate.
+    // Preallocate laplacian.
     double **sim_laplacian = alloc_2d_array(num_nodes, num_nodes);
+    std::queue<struct QueueItem> **queue_allocator = (std::queue<struct QueueItem> **) malloc(total_processes * sizeof(std::queue<struct QueueItem> *));
+    std::set<int> **visited_nodes_allocator = (std::set<int> **) malloc(total_processes * sizeof(std::set<int> *));
+    for (int i = 0; i < total_processes; i++) {
+        visited_nodes_allocator[i] = new std::set<int>();
+        queue_allocator[i] = new std::queue<struct QueueItem>();
+    }
+
+    // Preallocate eigen.
+    double** t_matrix = alloc_2d_array(num_nodes, num_nodes);
+
+    // 
     double* evalues = (double*) calloc(num_nodes, sizeof(double));
     std::vector<std::vector<double>> eigenpoints;
 
     // Create Laplacian. 
     double start_simulation = omp_get_wtime(); 
-    build_epsilon_neighborhood(matrix, sim_laplacian, num_nodes, epsilon);
+    build_epsilon_neighborhood(matrix, sim_laplacian, num_nodes, epsilon, visited_nodes_allocator, queue_allocator);
     if (DEBUG) printf("Computed laplacian.\n");
     double end_laplacian = omp_get_wtime();
 
     // Compute eigenvectors.
-    
-    eigen(sim_laplacian, evalues, num_nodes);
+    eigen(sim_laplacian, t_matrix, evalues, num_nodes);
     if (DEBUG) printf("Computed eigenvectors.\n");
     double end_eigen = omp_get_wtime();
-
     // Create n points of size k
     for (int n = 0; n < num_nodes; n++) {
         std::vector<double> data;
