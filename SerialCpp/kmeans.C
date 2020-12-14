@@ -107,14 +107,14 @@ int getIndexOfClosestCentroid(vector<vector<double>> centroids, vector<double> e
 vector<vector<vector<double>>> runKMeans(vector<vector<double>> elements, int dimensionOfVectors, int numClusters, bool verbose, string fileOut) {
     // generate random centroids here
 
-    auto t_start = std::chrono::high_resolution_clock::now();
+    // auto t_start = std::chrono::high_resolution_clock::now();
     
     vector<vector<double>> centroids = getRandomCentroids(elements, dimensionOfVectors, numClusters);
 
-    auto t_end = std::chrono::high_resolution_clock::now();
-    cout << "Time to generate the random centroids: "
-              << std::chrono::duration<double, std::milli>(t_end-t_start).count()
-              << " ms\n";
+    // auto t_end = std::chrono::high_resolution_clock::now();
+    // cout << "Time to generate the random centroids: "
+    //           << std::chrono::duration<double, std::milli>(t_end-t_start).count()
+    //           << " ms\n";
 
     if (verbose) {
         cout << "Random centroids: \n";
@@ -131,10 +131,10 @@ vector<vector<vector<double>>> runKMeans(vector<vector<double>> elements, int di
     map<vector<double>, int> elementToClusterIndex;     // map(vector<double> => int index of cluster in vector)
     
 
-    t_start = std::chrono::high_resolution_clock::now();
+    // t_start = std::chrono::high_resolution_clock::now();
 
     // place the elements into their initial clusters
-    #omp parallel for shared(clusters, elementToClusterIndex, sizes)
+    #pragma omp parallel for shared(clusters, elementToClusterIndex, sizes)
     for (int i = 0; i < elements.size(); i++) {
         // find which centroid its closest to
         int indexOfClosestCentroid = getIndexOfClosestCentroid(centroids, elements[i], dimensionOfVectors);
@@ -155,33 +155,32 @@ vector<vector<vector<double>>> runKMeans(vector<vector<double>> elements, int di
         }
     }
 
-    t_end = chrono::high_resolution_clock::now();
+    // t_end = chrono::high_resolution_clock::now();
  
-    if (verbose) {
-        cout << "Wall clock time For finding initial clusters: "
-              << std::chrono::duration<double, std::milli>(t_end-t_start).count()
-              << " ms\n";
-    }
+    // if (verbose) {
+    //     cout << "Wall clock time For finding initial clusters: "
+    //           << std::chrono::duration<double, std::milli>(t_end-t_start).count()
+    //           << " ms\n";
+    // }
 
-    t_start = chrono::high_resolution_clock::now();
+    // t_start = chrono::high_resolution_clock::now();
 
     bool convergence = false;
     while (!convergence) {
         if (verbose) cout << "Iteration\n";
         convergence = true;
         // regenerate the centroids so they are the new means
-        #omp parallel for
+        #pragma omp parallel for
         for (int i = 0; i < numClusters; i++) {
             centroids[i] = getMean(clusters[i], dimensionOfVectors);
         }
         // reset sizes
-        #omp parallel for
         for (int i = 0; i < sizes.size(); i++) {
             sizes[i] = 0;
         }
 
         // loop through every element and put them their new respective cluster
-        #omp parallel for shared(sizes, elementToClusterIndex)
+        #pragma omp parallel for shared(sizes, elementToClusterIndex)
         for (int i = 0; i < elements.size(); i++) {
             int newIndex = getIndexOfClosestCentroid(centroids, elements[i], dimensionOfVectors);
             int oldIndex = elementToClusterIndex[elements[i]];
@@ -197,13 +196,13 @@ vector<vector<vector<double>>> runKMeans(vector<vector<double>> elements, int di
         }
     }
 
-    t_end = chrono::high_resolution_clock::now();
+    // t_end = chrono::high_resolution_clock::now();
 
-    if (verbose) {
-        cout << "Wall clock time For iterating through and finding clusters: "
-            << std::chrono::duration<double, std::milli>(t_end-t_start).count()
-            << " ms\n";
-    }
+    // if (verbose) {
+    //     cout << "Wall clock time For iterating through and finding clusters: "
+    //         << std::chrono::duration<double, std::milli>(t_end-t_start).count()
+    //         << " ms\n";
+    // }
 
 
     if (verbose) {

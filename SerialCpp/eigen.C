@@ -94,7 +94,7 @@ void rotate(double** matrix, double** p, int k, int l, int n) {
  ****************************************************************/
 double** eigen(double** matrix, double ** p, double* evalues, int n) {
     int maxRot = 5*n;       // Set limit on number of rotations
-    double tol = 0.000001; // 1e-6
+    double tol = 0.0001; // 1e-4
 
     // Initialize transformation matrix
     for (int i=0; i<n; i++) { p[i][i] = 1.0; } // make diagonals 1
@@ -106,7 +106,10 @@ double** eigen(double** matrix, double ** p, double* evalues, int n) {
 
     for (int i=0; i<maxRot; i++) { // Jacobi rotation loop
         aMax = maxElem(matrix, &k, &l, n);
-        if (aMax < tol) { break; }
+        if (aMax < tol) {
+            printf("Converged!\n");
+            break; 
+        }
         rotate(matrix, p, k, l, n);
     }
 

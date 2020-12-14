@@ -66,6 +66,7 @@ int main(int argc, char **argv) {
         exit(1);
     }
     if (is_sim_matrix) {
+        printf("Reading in adjacency matrix.\n");
         double next_value;
         for (int r = 0; r < num_nodes; r++) {
             for (int c = 0; c < num_nodes; c++) {
@@ -82,6 +83,7 @@ int main(int argc, char **argv) {
             }
         }  
     } else {
+        printf("Reading in adjacency list.\n");
         int num_neighbors;
         int next_neighbor;
         for(int n = 0; n < num_nodes; n++){
@@ -111,8 +113,9 @@ int main(int argc, char **argv) {
     }
 
     // Preallocate eigen.
+    #if !ADJ_MATRIX
     double** t_matrix = alloc_2d_array(num_nodes, num_nodes);
-
+    #endif
     // 
     double* evalues = (double*) calloc(num_nodes, sizeof(double));
     std::vector<std::vector<double>> eigenpoints;
@@ -124,7 +127,17 @@ int main(int argc, char **argv) {
     double end_laplacian = omp_get_wtime();
 
     // Compute eigenvectors.
+    #if !ADJ_MATRIX
     eigen(sim_laplacian, t_matrix, evalues, num_nodes);
+    #else
+    eigen(sim_laplacian, matrix, evalues, num_nodes);
+    for (int n1 = 0; n1 < num_nodes; n1++) {
+        for (int n2 = 0; n2 < num_nodes; n2++) {
+            matrix[n1][n2] = 0;
+        }
+    }
+    #endif
+    
     if (DEBUG) printf("Computed eigenvectors.\n");
     double end_eigen = omp_get_wtime();
     // Create n points of size k
