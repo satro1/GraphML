@@ -56,21 +56,28 @@ void rotate(double** matrix, double** p, int k, int l, int n) {
     matrix[k][k] = matrix[k][k] - t*temp;
     matrix[l][l] = matrix[l][l] + t*temp;
 
+    #pragma omp parallel for
     for (int i=0; i<k; i++) {      // Case of i < k
         temp = matrix[i][k];
         matrix[i][k] = temp - s*(matrix[i][l] + tau*temp);
         matrix[i][l] = matrix[i][l] + s*(temp - tau*matrix[i][l]);
     }
+
+    // pragma omp parallel for
     for (int i=k+1; i<l; i++) {  // Case of k < i < l
         temp = matrix[k][i];
         matrix[k][i] = temp - s*(matrix[i][l] + tau*matrix[k][i]);
         matrix[i][l] = matrix[i][l] + s*(temp - tau*matrix[i][l]);
     }
+
+    // pragma omp parallel for
     for (int i=l+1; i<n; i++) {  // Case of i > l
         temp = matrix[k][i];
         matrix[k][i] = temp - s*(matrix[l][i] + tau*temp);
         matrix[l][i] = matrix[l][i] + s*(temp - tau*matrix[l][i]);
     }
+
+    #pragma omp parallel for
     for (int i=0; i<n; i++) {     // Update transformation matrix
         temp = p[i][k];
         p[i][k] = temp - s*(p[i][l] + tau*p[i][k]);
