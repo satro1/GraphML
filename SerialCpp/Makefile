@@ -15,8 +15,11 @@ simp: all
 run: all
 	./spectral 0 $(size) 3 ../TestInput/sim_mtx/size${size}/input_${size}x${size}_1.input 3 output.txt
 
-social_network: all
-	./spectral 0 37000 100 ~/Downloads/git_web_ml/social_network.csv 1 output.txt
+social_network_fb: all
+	./spectral 1 4039 45 ../SampleInput/facebook_combined.adj 3 output.txt
+
+social_network_git: all
+	./spectral 1 37700 45 ../SampleInput/github_combined.adj 3 output.txt
 
 similarity_calc: similarity_calc.C
 	$(CXX) $(CXX_FLAGS) similarity_calc.C $(FILES) -o similarity_calc
