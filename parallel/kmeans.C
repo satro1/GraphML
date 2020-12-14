@@ -26,7 +26,7 @@ vector<vector<double>> getRandomCentroids(vector<vector<double>> nodes, int dim,
         max[i] = nodes[0][i];
     }
 
-    #pragma omp parallel for collapse(2)
+    #pragma omp parallel for collapse(2) shared(min)
     for (int i = 0; i < nodes.size(); i++) {
         for (int j = 0; j < dim; j++) {
             if (nodes[i][j] < min[j]) {
@@ -60,13 +60,14 @@ vector<double> getMean(vector<vector<double>> cluster, int dim) {
     int numElem = cluster.size();
     vector<double> mean(dim, 0);
 
-    #pragma omp parallel for
+    #pragma omp parallel for collapse(2) shared(mean)
     for (int i = 0; i < cluster.size(); i++) {
         for (int j = 0; j < dim; j++) {
             mean[j] += cluster[i][j];
         }
     }
 
+    // dont think we need to share here
     #pragma omp parallel for
     for (int i = 0; i < dim; i++) {
         mean[i] /= numElem;
@@ -78,7 +79,7 @@ vector<double> getMean(vector<vector<double>> cluster, int dim) {
 double distanceBetweenVectors(vector<double> a, vector<double> b, int dim) {
     double dist = 0;
     
-    #pragma omp parallel for
+    #pragma omp parallel for shared(dist)
     for (int i = 0; i < dim; i++) {
         dist += pow((a[i] - b[i]), 2);
     }
@@ -91,7 +92,7 @@ int getIndexOfClosestCentroid(vector<vector<double>> centroids, vector<double> e
     double minDistance = 0;
 
     // TODO Going to need a private clause i believe
-    #pragma omp parallel for
+    #pragma omp parallel for shared(minDistance, indexOfClosest)
     for (int i = 0; i < centroids.size(); i++) {
         double tempDistance = distanceBetweenVectors(centroids[i], element, dim);
         if (tempDistance < minDistance || indexOfClosest == -1) {
@@ -134,7 +135,7 @@ vector<vector<vector<double>>> runKMeans(vector<vector<double>> elements, int di
 
     // place the elements into their initial clusters
     // TODO something with shared here
-    #omp parallel for shared(clusters)
+    #omp parallel for shared(clusters, elementToClusterIndex, sizes)
     for (int i = 0; i < elements.size(); i++) {
         // find which centroid its closest to
         int indexOfClosestCentroid = getIndexOfClosestCentroid(centroids, elements[i], dimensionOfVectors);
@@ -180,7 +181,7 @@ vector<vector<vector<double>>> runKMeans(vector<vector<double>> elements, int di
         }
 
         // loop through every element and put them their new respective cluster
-        #omp parallel for
+        #omp parallel for shared(sizes, elementToClusterIndex)
         for (int i = 0; i < elements.size(); i++) {
             int newIndex = getIndexOfClosestCentroid(centroids, elements[i], dimensionOfVectors);
             int oldIndex = elementToClusterIndex[elements[i]];

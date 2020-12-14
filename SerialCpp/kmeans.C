@@ -20,11 +20,13 @@ vector<vector<double>> getRandomCentroids(vector<vector<double>> nodes, int dim,
     vector<double> min(dim, 0);
     vector<double> max(dim, 0);
 
+    #pragma omp parallel for
     for (int i = 0; i < dim; i++) {
         min[i] = nodes[0][i];
         max[i] = nodes[0][i];
     }
 
+    #pragma omp parallel for collapse(2) shared(min, max)
     for (int i = 0; i < nodes.size(); i++) {
         for (int j = 0; j < dim; j++) {
             if (nodes[i][j] < min[j]) {
@@ -40,6 +42,8 @@ vector<vector<double>> getRandomCentroids(vector<vector<double>> nodes, int dim,
     srand(0);
 
     vector<vector<double>> ret(numClusters, vector<double>(dim, 0));
+    
+    #pragma omp parallel for collapse(2)
     for (int i = 0; i < numClusters; i++) {
         for (int j = 0; j < dim; j++) {
             // set this to a random value between min[j] and max[j]
@@ -57,6 +61,7 @@ vector<double> getMean(vector<vector<double>> cluster, int dim) {
     int numElem = 0;
     vector<double> mean(dim, 0);
 
+    #pragma omp parallel for collapse(2) shared(mean)
     for (int i = 0; i < cluster.size(); i++) {
         numElem++;
         for (int j = 0; j < dim; j++) {
@@ -64,6 +69,7 @@ vector<double> getMean(vector<vector<double>> cluster, int dim) {
         }
     }
 
+    #pragma omp parallel for
     for (int i = 0; i < dim; i++) {
         mean[i] /= numElem;
     }
@@ -74,6 +80,7 @@ vector<double> getMean(vector<vector<double>> cluster, int dim) {
 double distanceBetweenVectors(vector<double> a, vector<double> b, int dim) {
     double dist = 0;
     
+    #pragma omp parallel for shared(dist)
     for (int i = 0; i < dim; i++) {
         dist += pow((a[i] - b[i]), 2);
     }
@@ -84,9 +91,9 @@ double distanceBetweenVectors(vector<double> a, vector<double> b, int dim) {
 int getIndexOfClosestCentroid(vector<vector<double>> centroids, vector<double> element, int dim) {
     int indexOfClosest = -1;
     double minDistance = 0;
+    
+    #pragma omp parallel for shared(minDistance, indexOfClosest)
     for (int i = 0; i < centroids.size(); i++) {
-
-
         double tempDistance = distanceBetweenVectors(centroids[i], element, dim);
         if (tempDistance < minDistance || indexOfClosest == -1) {
             minDistance = tempDistance;
@@ -127,6 +134,7 @@ vector<vector<vector<double>>> runKMeans(vector<vector<double>> elements, int di
     t_start = std::chrono::high_resolution_clock::now();
 
     // place the elements into their initial clusters
+    #omp parallel for shared(clusters, elementToClusterIndex, sizes)
     for (int i = 0; i < elements.size(); i++) {
         // find which centroid its closest to
         int indexOfClosestCentroid = getIndexOfClosestCentroid(centroids, elements[i], dimensionOfVectors);
@@ -162,15 +170,18 @@ vector<vector<vector<double>>> runKMeans(vector<vector<double>> elements, int di
         if (verbose) cout << "Iteration\n";
         convergence = true;
         // regenerate the centroids so they are the new means
+        #omp parallel for
         for (int i = 0; i < numClusters; i++) {
             centroids[i] = getMean(clusters[i], dimensionOfVectors);
         }
         // reset sizes
+        #omp parallel for
         for (int i = 0; i < sizes.size(); i++) {
             sizes[i] = 0;
         }
 
         // loop through every element and put them their new respective cluster
+        #omp parallel for shared(sizes, elementToClusterIndex)
         for (int i = 0; i < elements.size(); i++) {
             int newIndex = getIndexOfClosestCentroid(centroids, elements[i], dimensionOfVectors);
             int oldIndex = elementToClusterIndex[elements[i]];
