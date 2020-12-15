@@ -61,12 +61,12 @@ vector<double> getMean(vector<vector<double>> cluster, int dim) {
     int numElem = 0;
     vector<double> mean(dim, 0);
 
-    #pragma omp parallel for collapse(2) shared(mean)
+    #pragma omp parallel for shared(mean)
     for (int i = 0; i < cluster.size(); i++) {
-        numElem++;
         for (int j = 0; j < dim; j++) {
             mean[j] += cluster[i][j];
         }
+        numElem++;
     }
 
     #pragma omp parallel for

@@ -15,7 +15,7 @@
 double maxElem(double** matrix, int* k, int* l, int n) {
     double max = 0.0;
 
-    #pragma omp parallel for reduction(max:max)
+    #pragma omp parallel for
     for (int i=0; i<n-1; i++) {
         for (int j=i+1; j<n; j++) {
             if (abs(matrix[i][j]) >= max) {
@@ -63,14 +63,14 @@ void rotate(double** matrix, double** p, int k, int l, int n) {
         matrix[i][l] = matrix[i][l] + s*(temp - tau*matrix[i][l]);
     }
 
-    // pragma omp parallel for
+    #pragma omp parallel for
     for (int i=k+1; i<l; i++) {  // Case of k < i < l
         temp = matrix[k][i];
         matrix[k][i] = temp - s*(matrix[i][l] + tau*matrix[k][i]);
         matrix[i][l] = matrix[i][l] + s*(temp - tau*matrix[i][l]);
     }
 
-    // pragma omp parallel for
+    #pragma omp parallel for
     for (int i=l+1; i<n; i++) {  // Case of i > l
         temp = matrix[k][i];
         matrix[k][i] = temp - s*(matrix[l][i] + tau*temp);
