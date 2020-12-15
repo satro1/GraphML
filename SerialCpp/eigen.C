@@ -113,6 +113,7 @@ double** eigen(double** matrix, double ** p, double* evalues, int n) {
         rotate(matrix, p, k, l, n);
     }
 
+    #pragma omp parallel for
     for (int i=0; i<n; i++) { evalues[i] = matrix[i][i]; } // make diagonals 1
     return p;
 }
