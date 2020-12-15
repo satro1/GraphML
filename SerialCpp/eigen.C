@@ -93,7 +93,7 @@ void rotate(double** matrix, double** p, int k, int l, int n) {
  * n - size of matrix, where matrix is n*n
  ****************************************************************/
 double** eigen(double** matrix, double ** p, double* evalues, int n) {
-    int maxRot = 10*n;       // Set limit on number of rotations
+    int maxRot = 500;       // Set limit on number of rotations
     double tol = 0.001; // 1e-4
 
     // Initialize transformation matrix

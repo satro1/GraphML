@@ -9,29 +9,8 @@ combined: $(FILES)
 
 size=512
 
-simp: all
-	./spectral 0 5 3 ../SampleInput/small5x5.input 3 output.txt
-
 run: all
 	./spectral 0 $(size) 3 ../TestInput/sim_mtx/size${size}/input_${size}x${size}_1.input 3 output.txt
 
 social_network_fb: all
 	./spectral 1 4039 45 ../SampleInput/facebook_combined.adj 3 output.txt
-
-social_network_git: all
-	./spectral 1 37700 45 ../SampleInput/github_combined.adj 3 output.txt
-
-similarity_calc: similarity_calc.C
-	$(CXX) $(CXX_FLAGS) similarity_calc.C $(FILES) -o similarity_calc
-
-eigen: eigen.C
-	$(CXX) $(CXX_FLAGS) eigen.C $(FILES) -o eigen
-
-kmeans: kmeans.cpp
-	$(CXX) kmeans.cpp -o kmeans
-
-make test_sim: all
-	./similarity_calc 0 5 3 ../SampleInput/small5x5.input 1 output.txt
-
-make clean:
-	rm similarity_calc output.txt
