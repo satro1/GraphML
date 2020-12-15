@@ -93,10 +93,11 @@ void rotate(double** matrix, double** p, int k, int l, int n) {
  * n - size of matrix, where matrix is n*n
  ****************************************************************/
 double** eigen(double** matrix, double ** p, double* evalues, int n) {
-    int maxRot = 5*n;       // Set limit on number of rotations
-    double tol = 0.0001; // 1e-4
+    int maxRot = 10*n;       // Set limit on number of rotations
+    double tol = 0.001; // 1e-4
 
     // Initialize transformation matrix
+    #pragma omp parallel for
     for (int i=0; i<n; i++) { p[i][i] = 1.0; } // make diagonals 1
     
     int k = 0;
