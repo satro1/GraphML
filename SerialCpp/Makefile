@@ -1,17 +1,16 @@
-CXX=c++
-CXX_FLAGS = -Wall -std=c++11
-FILES = utils.C
+CXX=/usr/local/opt/llvm/bin/clang++
+CXX_FLAGS = -fopenmp -O3 -Wall -std=c++11 -I/usr/local/opt/llvm/include -L/usr/local/opt/llvm/lib
+FILES = main.C similarity_calc.C eigen.C kmeans.C utils.C
 
-all: similarity_calc
+all: combined
 
-similarity_calc: similarity_calc.C
-	$(CXX) $(CXX_FLAGS) similarity_calc.C $(FILES) -o similarity_calc
+combined: $(FILES)
+	$(CXX) $(CXX_FLAGS) $(FILES) -o spectral
 
-kmeans: kmeans.cpp
-	$(CXX) kmeans.cpp -o kmeans
+size=512
 
-make test_sim: all
-	./similarity_calc 0 5 ../SampleInput/small5x5.input 1 output.txt
+run: all
+	./spectral 0 $(size) 3 ../TestInput/sim_mtx/size${size}/input_${size}x${size}_1.input 3 output.txt
 
-make clean:
-	rm similarity_calc output.txt
+social_network_fb: all
+	./spectral 1 4039 45 ../SampleInput/facebook_combined.adj 3 output.txt

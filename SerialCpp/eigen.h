@@ -1,0 +1,1 @@
+double** eigen(double** matrix, double **p, double* evalues, int n);

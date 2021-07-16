@@ -16,8 +16,16 @@ K eigenvectors. Point 0 (N0) = first point of each k eigenvector.
 5. Compute K-Means Clustering Algorithm for these N points. The resulting
 cluster is the cluster for the node N in the graph.
 
-## SerialCpp
-Contains the (partial) serial implementation of spectral clustering algorithm.
+## Folder Structure
+SerialCpp - Contains the serial/parallel implementation of the spectral
+clustering algorithm. 
+SerialPython - Contains serial python implentation of spectral clustering algorithm.
+TestInput - Contains test matricies of various sizes.
+SampleInput - Contains real world input.
 
-## SerialPython
-Contains serial python implentation of spectral clustering algorith.
+## To run parallel code.
+1. Navigate to the SerialCpp folder.
+2. Compile (make all).
+3. Configure your compiler in the makefile to your local machine. Must support OpenMP.
+4. Set the number of threads to run on export - export OMP_NUM_THREADS=X
+3. Run demo example. (make run (512 nodes) or make social_network_fb (4.5K))

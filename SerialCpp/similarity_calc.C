@@ -19,11 +19,9 @@
 #include <set>
 
 #include "utils.h"
-
-struct QueueItem {
-  int next_node;
-  int distance;
-};
+#include "impl.h"
+#include "omp.h"
+#include "similarity_calc.h"
 
 /**
  * Traverses a graph for a given node marking nodes that it visits with a
@@ -36,39 +34,53 @@ struct QueueItem {
  *  curr_node: Current node to run BFS on.
  *  episilon: Max distance to traverse.
  */
+#if ADJ_MATRIX
 void _recursive_laplacian_bfs(double **const matrix, double **sim_matrix,
-                              int num_nodes, int curr_node, int epsilon) {
-  // Setup BFS data structures.
-  std::set<int> visited_nodes;
-  std::queue<struct QueueItem> queue;
-
+                              int num_nodes, int curr_node, double epsilon,
+                              std::set<int> *visited_nodes, std::queue<struct QueueItem> *queue) {
+#else
+void _recursive_laplacian_bfs(std::vector<std::vector<int>> matrix, double **sim_matrix,
+                              int num_nodes, int curr_node, double epsilon,
+                              std::set<int> *visited_nodes, std::queue<struct QueueItem> *queue) {
+#endif
   // Add initial node.
   int num_visited = -1; // Don't count visit to self.
-  queue.push((QueueItem){curr_node, epsilon});
+  queue->push((QueueItem){curr_node, epsilon});
+  visited_nodes->clear();
 
-  while (!queue.empty()) {
+  while (!queue->empty()) {
     // Get next node to visit.
-    struct QueueItem next_visit = queue.front();
-    queue.pop();
+    struct QueueItem *next_visit = &queue->front();
+    queue->pop();
 
     // Only visit nodes that have not been visited.
-    if (visited_nodes.find(next_visit.next_node) == visited_nodes.end()) {
+    if (visited_nodes->find(next_visit->next_node) == visited_nodes->end()) {
       // Visit that node.
       num_visited += 1;
-      visited_nodes.insert(next_visit.next_node);
-      sim_matrix[curr_node][next_visit.next_node] = -1;
+      visited_nodes->insert(next_visit->next_node);
+      sim_matrix[curr_node][next_visit->next_node] = -1;
 
       // Visit the nodes neighbors.
-      if (next_visit.distance != 0) {
+      if (next_visit->distance != 0) {
         for (int n = 0; n < num_nodes; n++) {
-          if (n != next_visit.next_node) {
-            double next_distance = matrix[next_visit.next_node][n];
+          #if ADJ_MATRIX
+          if (n != next_visit->next_node) {
+            
+            double next_distance = matrix[next_visit->next_node][n];
             // Can only make jumps if remaining distance > edge weight
-            if (next_distance > 0 && next_visit.distance - next_distance >= 0) {
+            if (next_distance > 0 && next_visit->distance - next_distance >= 0) {
               // Traverse edge.
-              queue.push((QueueItem){n, next_visit.distance - next_distance});
+              queue->push((QueueItem){n, next_visit->distance - next_distance});
+            }
+            
+          }
+          #else
+          if (next_visit->distance >= 1) {
+            for (int n : matrix.at(next_visit->next_node)) {
+              queue->push((QueueItem){n, next_visit->distance - 1});
             }
           }
+          #endif
         }
       }
     }
@@ -90,11 +102,16 @@ void _recursive_laplacian_bfs(double **const matrix, double **sim_matrix,
  * Returns:
  *  sim_matrix: Filled laplacian similarity matrix of provided graph.
  */
-double **build_epsilon_neighborhood(double **const matrix, int num_nodes,
-                                    int epsilon) {
-  double **sim_matrix = alloc_2d_array(num_nodes, num_nodes);
+#if ADJ_MATRIX
+void build_epsilon_neighborhood(double **const matrix, double **const sim_matrix, int num_nodes,
+                                    int epsilon, std::set<int> **visited_nodes_allocator, std::queue<struct QueueItem> **queue_allocator) {
+#else
+void build_epsilon_neighborhood(std::vector<std::vector<int>> matrix, double **const sim_matrix, int num_nodes, int epsilon,
+                                std::set<int> **visited_nodes_allocator, std::queue<struct QueueItem> **queue_allocator) {
+#endif
+  #pragma omp parallel for schedule(dynamic)
   for (int n = 0; n < num_nodes; n++) {
-    _recursive_laplacian_bfs(matrix, sim_matrix, num_nodes, n, epsilon);
+    int thread_num = omp_get_thread_num();
+    _recursive_laplacian_bfs(matrix, sim_matrix, num_nodes, n, epsilon, visited_nodes_allocator[thread_num], queue_allocator[thread_num]);
   }
-  return sim_matrix;
 }
